@@ -2,14 +2,14 @@
 	
 	Class Extension_TourCMS extends Extension {
 	
-		private $mpa_id = 0;
-		private $ch_id = 0;
-		private $api_key = "";
-		private $result_type = 'simplexml';
+		//private $mpa_id = 0;
+		//private $ch_id = 0;
+		//private $api_key = "";
+		//private $result_type = 'simplexml';
 
 		public function __construct(Array $args) {
 			parent::__construct($args);
-			$config = Symphony::Configuration();
+			//$config = Symphony::Configuration();
 		}
 	
 		public function about() {
@@ -38,8 +38,21 @@
 		}
 
 		public function uninstall() {
+			//drop field table
+			$this->_Parent->Database->query("DROP TABLE `tbl_fields_tourcms_tourlist`");
+		
 			Symphony::Configuration()->remove('tour-cms');
 			Administration::instance()->saveConfig();
+		}
+		
+		public function install() {
+			//create field table
+			return $this->_Parent->Database->query("CREATE TABLE `tbl_fields_tourcms_tourlist` (
+				`id` int(11) unsigned NOT NULL auto_increment,
+				`field_id` int(11) unsigned NOT NULL,
+				PRIMARY KEY (`id`),
+				KEY `field_id` (`field_id`))"
+			);
 		}
 		
 		/**
