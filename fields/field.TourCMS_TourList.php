@@ -58,7 +58,7 @@
 		
 		public function getParameterPoolValue(Array $data){
 			if( !is_null($data) and $data["tour_id"] ) {
-				return implode(',',explode(self::DATA_DIVIDER,$data["tour_id"]));
+				return explode(self::DATA_DIVIDER,$data["tour_id"]);
 			} else {
 				return '';
 			}
