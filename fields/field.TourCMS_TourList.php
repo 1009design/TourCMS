@@ -55,24 +55,36 @@
 		public function isSortable(){
 			return true;
 		}
+		
+		public function getParameterPoolValue(Array $data){
+			if( !is_null($data) and $data["tour_id"] ) {
+				return implode(',',explode(self::DATA_DIVIDER,$data["tour_id"]));
+			} else {
+				return '';
+			}
+		}
 
 		public function appendFormattedElement(&$wrapper, $data, $encode=false){
-			if (!is_array($data) or is_null($data['value'])) return;
-
+			if (is_null($data) or is_null($data['tour_id'])) return;
+			
+			$data['tour_id'] = explode(self::DATA_DIVIDER,$data['tour_id']);
+			$data['tour_name'] = explode(self::DATA_DIVIDER,$data['tour_name']);
+			
 			$list = new XMLElement($this->get('element_name'));
 
-			if (!is_array($data['handle']) and !is_array($data['value'])) {
+			
+			if (!is_array($data['tour_id']) and !is_array($data['tour_name'])) {
 				$data = array(
-					'handle'	=> array($data['handle']),
-					'value'		=> array($data['value'])
+					'tour_id'	=> array($data['tour_id']),
+					'tour_name'	=> array($data['tour_name'])
 				);
 			}
 
-			foreach ($data['value'] as $index => $value) {
+			foreach ($data['tour_id'] as $index => $value) {
 				$list->appendChild(new XMLElement(
 					'item',
-					General::sanitize($value),
-					array('handle' => $data['handle'][$index])
+					General::sanitize($data['tour_name'][$index]),
+					array('id' => $value)
 				));
 			}
 
