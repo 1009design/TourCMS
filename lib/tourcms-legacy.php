@@ -52,14 +52,54 @@
 	 * 		followup_date	Followup date (YYYY-MM-DD)
 	 * 		send_email		Set to 0 to override the settings inside TourCMS for whether to send email to staff user for this enquiry
 	 */
-
 	class TourCMS_Legacy {
 		protected $apiUrl = null;
 		protected $password = null;
 		
+		protected $customerFields = null;
+		protected $customerIgnores = null;
+		
+		protected $enquiryFields = null;
+		protected $enquiryIgnores = null;
+		
 		public function __construct($apiUrl, $password) {
 			$this->apiUrl = $apiUrl;
 			$this->password = $password;
+			
+			$this->customerFields = $this->getCustomerFields();
+			$this->customerIgnores = $this->getCustomerIgnores();
+			
+			$this->enquiryFields = $this->getEnquiryFields();
+			$this->enquiryIgnores = $this->getEnquiryIgnores();
+		}
+		
+		public function getCustomerFields() {
+			// TourCMS specific fields (if they exist) will be added to specific XML nodes
+			$fields  = 'title,firstname,middlename,surname,address,city,county,postcode,country,gender,nationality,dob,agecat,';
+			$fields .= 'passportnumber,passportplaceofissue,passportissuedate,passportexpirydate,';
+			$fields .= 'agentid,wherehear,';
+			$fields .= 'email,fax,telhome,telwork,telmobile,telsms,contactnote,';
+			$fields .= 'diet,medical,nokname,nokrelationship,noktel,nokcontact,notes,permemail';
+			
+			return explode(',',$fields);
+		}
+		
+		public function getCustomerIgnores() {
+			// Hard code any fields to ignore here, comma separated
+			$fields = '';
+			return explode(',',$fields);
+		}
+		
+		public function getEnquiryFields() {
+			// enquiry specific fields (if they exist) will be added to specific XML nodes
+			$fields = 'type,category,detail,note,username,value,outcome,followup_date,send_email';
+			return explode(',',$fields);
+		}
+		
+		public function getEnquiryIgnores() {
+			// Hard code any fields to ignore here, comma separated
+			$fields = '';
+			return explode(',',$fields);
 		}
 		
 		public function push($data) {
@@ -68,68 +108,26 @@
 			}
 		
 			$xml = '';
-		
 			foreach($data as $k => $v) {
 				$k = strtolower($k);
-				switch($k) {
-					case 'title':
-					case 'firstname':
-					case 'middlename':
-					case 'surname':
-					case 'address':
-					case 'city':
-					case 'country':
-					case 'postcode':
-					case 'country':
-					case 'gender':
-					case 'nationality':
-					case 'dob':
-					case 'agecat':
-					case 'passportnumber':
-					case 'passportplaceofissue':
-					case 'passportexpirydate':
-					case 'agentid':
-					case 'wherehear':
-					case 'email':
-					case 'fax':
-					case 'telhome':
-					case 'telwork':
-					case 'telmobile':
-					case 'telsms':
-					case 'contactnote':
-					case 'diet':
-					case 'medical':
-					case 'nokname':
-					case 'nokrelationship':
-					case 'noktel':
-					case 'nokcontact':
-					case 'notes':
-					case 'permemail':
-						$xml .= sprintf('<%s>%s</%s>',$k,htmlspecialchars($v),$k);
-						break;
-						
-					case 'enquiry':
-						$xml .= $this->createEnquiry($v);
-						break;
-					
+				
+				if( in_array($k,$this->customerFields) && !in_array($k,$this->customerIgnores) ) {
+					$xml .= sprintf('<%s>%s</%s>',$k,htmlspecialchars($v),$k);
+				} else if( $k == 'enquiry' ) {
+					$xml .= $this->createEnquiry($v);
 				}
 			}
 			
-			if( empty($xml) ) {
-				return false;
+			$response = false;
+			if( !empty($xml) ) {
+				$xml .= '<transaction>NewCustomer</transaction>';
+				$xml .= '<apipassword>' . $this->password . '</apipassword>';
+				
+				$xml = '<query>' . $xml . '</query>';
+				$response = $this->sendPost($xml);
 			}
-			$xml .= '<transaction>NewCustomer</transaction>';
-			$xml .= '<apipassword>' . $this->password . '</apipassword>';
-			$xml = '<query>' . $xml . '</query>';
-			/*
-			$XPost = '' .
-				'<query>' . 
-					'<transaction>NewCustomer</transaction>' .
-					'<apipassword>' . $this->password . '</apipassword>' .
-					'<surname>John Doe</surname>' .
-				'</query>';
-			*/
-			return $this->sendPost($xml);
+			
+			return $response;
 		}
 		
 		protected function createEnquiry($data) {
@@ -140,18 +138,9 @@
 			$enquiry = '';
 			foreach($data as $k => $v) {
 				$k = strtolower($k);
-				switch($k) {
-					case 'type':
-					case 'category':
-					case 'detail':
-					case 'note':
-					case 'username':
-					case 'value':
-					case 'outcome':
-					case 'followup_date':
-					case 'send_email':
-						$enquiry .= sprintf('<%s>%s</%s>',$k,htmlspecialchars($v),$k);
-						break;
+				
+				if( in_array($k,$this->enquiryFields) || !in_array($k,$this->enquiryIgnores) ) {
+					$enquiry .= sprintf('<%s>%s</%s>',$k,htmlspecialchars($v),$k);
 				}
 			}
 			
