@@ -88,37 +88,82 @@
 		}
 
 		protected function __trigger(){
+			
+			$push = true;
+			$fields = '<fields>';
+			
+			if(empty($_POST['firstname'])) {
+				$push = false;
+			}
+			$fields .= sprintf('<%s type="%s">%s</%s>',
+					'firstname',
+					(empty($_POST['firstname']) ? 'missing' : 'valid'),
+					(empty($_POST['firstname']) ? '' : $_POST['firstname']),
+					'firstname');
+			
+			if(empty($_POST['surname'])) {
+				$push = false;
+			}
+			$fields .= sprintf('<%s type="%s">%s</%s>',
+					'surname',
+					(empty($_POST['surname']) ? 'missing' : 'valid'),
+					(empty($_POST['surname']) ? '' : $_POST['surname']),
+					'surname');
+					
+			if(empty($_POST['email'])) {
+				$push = false;
+			}
+			$fields .= sprintf('<%s type="%s">%s</%s>',
+					'email',
+					(empty($_POST['email']) ? 'missing' : 'valid'),
+					(empty($_POST['email']) ? '' : $_POST['email']),
+					'email');
+					
+			if(empty($_POST['enquiry']['detail'])) {
+				$push = false;
+			}
+			$fields .= sprintf('<%s type="%s">%s</%s>',
+					'enquiry_detail',
+					(empty($_POST['enquiry']['detail']) ? 'missing' : 'valid'),
+					(empty($_POST['enquiry']['detail']) ? '' : $_POST['enquiry']['detail']),
+					'enquiry_detail');
+			
+			$fields .= '</fields>';
+			
 			include(EXTENSIONS . '/tourcms/lib/tourcms-legacy.php');
 			
-			//acquire legacy api settings
-			$config = Symphony::Configuration();
-			$url = $config->get('legacy-api-base-url','tour-cms');
-			$password = $config->get('legacy-api-password-key','tour-cms');
-			//print_r($url);
-			//print_r($password);
+			$response = null;
+			if( $push ) {
+				//acquire legacy api settings
+				$config = Symphony::Configuration();
+				$url = $config->get('legacy-api-base-url','tour-cms');
+				$password = $config->get('legacy-api-password-key','tour-cms');
+				
+				//initialize API wrapper
+				$legacy = new TourCMS_Legacy($url,$password);
+				
+				//push to TourCMS and return response
+				$response = $legacy->push($_POST);
+			}
 			
-			//initialize API wrapper
-			$legacy = new TourCMS_Legacy($url,$password);
-			
-			//push to TourCMS and return response
-			$response = $legacy->push($_POST);
-			if(is_null($response)) {
-				$response = '<error>null</error>';
-			} else if( $response === false ) {
-				$response = '<error>false</error>';
-			} else if( $response == '' ) {
-				$response = '<error>empty</error>';
+			$condition = null;
+			if(empty($response)) {
+				$condition = 'error';
+				$response = '<response />';
 			} else {
+				$condition = 'ok';
 				$response = substr($response,strpos($response,'<response>'));
 			}
-			//var_dump($_POST);
+			
+			$result = sprintf('<%s result="%s">%s%s</%s>',self::ROOTELEMENT,$condition,$fields,$response,self::ROOTELEMENT);
+			//$result->appendChild($response);
+			//$result->appendChild($fields);
+			//print_r($response);
 			//die();
-			$result = new XMLElement(self::ROOTELEMENT,$response);
-			//$result[''] = $response;
-			//print_r($result);
+			//echo $result;
 			//die();
+			
 			return $result;
-			//return $response;
 		}
 
 	}
