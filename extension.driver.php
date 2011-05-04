@@ -99,6 +99,20 @@
 			$url_input = Widget::Input('settings[tour-cms][url]', empty($url) ? '' : $url, 'text');
 			$url_label = Widget::Label('Cache Url', $url_input);
 			$url_help = new XMLElement('p', __('URL of the cached data from TourCMS here. e.g. http://your.domain/api/tourcms-cache/'), array('class' => 'help'));
+			
+			// Legacy API base URL
+			$la_base_url = $config->get('legacy-api-base-url','tour-cms');
+			$la_base_url_input = Widget::Input('settings[tour-cms][legacy-api-base-url]', empty($la_base_url) ? '' : $la_base_url, 'text');
+			$la_base_url_label = Widget::Label('Legacy API base URL', $la_base_url_input);
+			$la_base_url_help = new XMLElement('p', __('The API Base URL for your account, can be found in Configuration & '
+					. 'Setup, on the Data API page, and add NewCustomer.php to the end.<br/>'
+					. 'e.g. https://live.tourcms.com/api/NewCustomer/1234/abcdefghijklmnopqrstuvwx/Customer.php'), array('class' => 'help'));
+
+			// Legacy API password
+			$la_pwd = $config->get('legacy-api-password','tour-cms');
+			$la_pwd_input = Widget::Input('settings[tour-cms][legacy-api-password]', empty($la_pwd_key) ? '' : $la_pwd_key, 'text');
+			$la_pwd_label = Widget::Label('Legacy API password', $la_pwd_input);
+			$la_pwd_help = new XMLElement('p', __('Password key for api, API will not work with empty password.'), array('class' => 'help'));
 
 			// Append widgets to output
 			$div->appendChild($api_key_label);
@@ -114,6 +128,12 @@
 			
 			$group->appendChild($url_label);
 			$group->appendChild($url_help);
+			
+			$group->appendChild($la_base_url_label);
+			$group->appendChild($la_base_url_help);
+			
+			$group->appendChild($la_pwd_label);
+			$group->appendChild($la_pwd_help);
 
 			// Append to preferences group
 			$context['wrapper']->appendChild($group);
